@@ -1,0 +1,12 @@
+Metadata-Version: 2.4
+Name: volatility-india
+Version: 0.1.0
+Summary: MSAE-India Volatility Prediction System
+Author: MSAE-India Team
+Requires-Python: >=3.9
+Requires-Dist: pandas
+Requires-Dist: numpy
+Dynamic: author
+Dynamic: requires-dist
+Dynamic: requires-python
+Dynamic: summary
