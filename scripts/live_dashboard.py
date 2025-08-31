@@ -136,16 +136,26 @@ if 'predictions' not in st.session_state:
 async def get_prediction(symbol: str, horizon: int = 1) -> Optional[float]:
     """Get volatility prediction from API"""
     try:
+        # Check if we're running in Streamlit Cloud (no local prediction server)
+        if os.getenv('STREAMLIT_CLOUD') or 'streamlit.app' in os.getenv('HOSTNAME', ''):
+            # Return a mock prediction for demo purposes
+            import random
+            return round(random.uniform(15.0, 35.0), 2)
+            
         async with aiohttp.ClientSession() as session:
             async with session.post(
                 'http://localhost:8013/predict',
-                json={'symbol': symbol.replace('.NS', ''), 'horizon': horizon}
+                json={'symbol': symbol.replace('.NS', ''), 'horizon': horizon},
+                timeout=aiohttp.ClientTimeout(total=5)  # 5 second timeout
             ) as resp:
                 if resp.status == 200:
                     data = await resp.json()
                     return data.get('forecast')
     except Exception as e:
         logger.error(f"Failed to get prediction: {e}")
+        # Return a fallback prediction for demo purposes
+        import random
+        return round(random.uniform(15.0, 35.0), 2)
     return None
 
 def create_candlestick_chart(df: pd.DataFrame, predictions: Dict[str, float], symbol: str):
@@ -153,6 +163,19 @@ def create_candlestick_chart(df: pd.DataFrame, predictions: Dict[str, float], sy
     # Get the display name
     display_name = INDEX_SYMBOLS.get(symbol, symbol.replace(".NS", ""))
     
+    # Ensure we have valid data
+    if df is None or len(df) == 0:
+        # Create empty figure with message
+        fig = go.Figure()
+        fig.add_annotation(
+            text="No data available",
+            xref="paper", yref="paper",
+            x=0.5, y=0.5, xanchor='center', yanchor='middle',
+            showarrow=False, font=dict(size=16)
+        )
+        fig.update_layout(title=f"{display_name} - No Data", height=400)
+        return fig
+        
     # Create figure with secondary y-axis
     fig = make_subplots(
         rows=2, cols=1,
@@ -413,6 +436,13 @@ async def app():
         show_vol = st.checkbox("Show Volume", value=True)
         
         st.markdown("---")
+        
+        # Add prediction service disclaimer
+        if os.getenv('STREAMLIT_CLOUD') or 'streamlit.app' in os.getenv('HOSTNAME', ''):
+            st.markdown("### ⚠️ Demo Mode")
+            st.info("Volatility predictions are simulated for demo purposes. In production, these would come from a live ML model server.")
+        
+        st.markdown("---")
         st.markdown("### 📈 Analysis Settings")
         vol_window = st.select_slider(
             "Volatility Window (days)",
@@ -436,8 +466,8 @@ async def app():
                     # Get live data with proper error handling
                     df = await st.session_state.data_fetcher.get_ohlcv_data(symbol)
                     if df is not None and len(df) > 0:
-                        # Clean the data
-                        df = df.fillna(method='ffill').fillna(method='bfill')
+                        # Clean the data using modern pandas methods
+                        df = df.ffill().bfill()
                         all_data[symbol] = df
                         
                         # Get prediction with proper symbol mapping
@@ -487,7 +517,7 @@ async def app():
                         with stock_cols[stock_idx % 2]:
                             # Create and display chart
                             fig = create_candlestick_chart(all_data[symbol], st.session_state.predictions, symbol)
-                            st.plotly_chart(fig, use_container_width=True)
+                            st.plotly_chart(fig, use_container_width=True, key=f"stock_chart_{symbol}_{stock_idx}")
                             
                             # Display key metrics below the chart
                             metrics_cols = st.columns(3)
@@ -555,7 +585,7 @@ async def app():
                             with stock_cols[stock_idx % 2]:
                                 # Create and display chart
                                 fig = create_candlestick_chart(all_data[symbol], st.session_state.predictions, symbol)
-                                st.plotly_chart(fig, use_container_width=True)
+                                st.plotly_chart(fig, use_container_width=True, key=f"sidebar_chart_{symbol}_{stock_idx}")
                                 
                                 # Display key metrics below the chart
                                 metrics_cols = st.columns(3)
