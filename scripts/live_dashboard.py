@@ -517,7 +517,7 @@ async def app():
                         with stock_cols[stock_idx % 2]:
                             # Create and display chart
                             fig = create_candlestick_chart(all_data[symbol], st.session_state.predictions, symbol)
-                            st.plotly_chart(fig, use_container_width=True, key=f"stock_chart_{symbol}_{stock_idx}")
+                            st.plotly_chart(fig, use_container_width=True, key=f"main_stock_chart_{symbol}_{stock_idx}")
                             
                             # Display key metrics below the chart
                             metrics_cols = st.columns(3)
@@ -570,74 +570,8 @@ async def app():
                             
                             st.markdown("---")
                         stock_idx += 1
-                    
-                    # Stock Charts Section
-                    st.markdown("---")
-                    st.markdown('<div class="market-header">📈 STOCK ANALYSIS</div>', unsafe_allow_html=True)
-                    
-                    # Create two columns for stock charts
-                    stock_cols = st.columns(2)
-                    stock_idx = 0
-                    
-                    # Display charts for individual stocks
-                    for symbol in all_data:
-                        if symbol not in ['^NSEI', '^NSEBANK'] and symbol in all_analysis:
-                            with stock_cols[stock_idx % 2]:
-                                # Create and display chart
-                                fig = create_candlestick_chart(all_data[symbol], st.session_state.predictions, symbol)
-                                st.plotly_chart(fig, use_container_width=True, key=f"sidebar_chart_{symbol}_{stock_idx}")
-                                
-                                # Display key metrics below the chart
-                                metrics_cols = st.columns(3)
-                                analysis = all_analysis[symbol]
-                                
-                                with metrics_cols[0]:
-                                    st.metric(
-                                        "Current Price",
-                                        f"₹{analysis['current_price']:,.2f}",
-                                        f"{analysis['price_change_pct']:+.2f}%"
-                                    )
-                                
-                                with metrics_cols[1]:
-                                    if analysis['volume'] is not None:
-                                        vol_change = (analysis['volume']/analysis['avg_volume']-1)*100
-                                        st.metric(
-                                            "Volume",
-                                            f"{analysis['volume']:,.0f}",
-                                            f"{vol_change:+.1f}% vs Avg"
-                                        )
-                                
-                                with metrics_cols[2]:
-                                    pred_vol = st.session_state.predictions.get(symbol, 0)
-                                    current_vol = analysis['rolling_vol']
-                                    st.metric(
-                                        "Predicted Vol",
-                                        f"{pred_vol:.2f}%",
-                                        f"{pred_vol - current_vol:+.2f}% vs Current"
-                                    )
-                                
-                                # Display 52-week information
-                                week_cols = st.columns(2)
-                                with week_cols[0]:
-                                    st.markdown(f"""
-                                        <div style='background: rgba(0,200,0,0.1); padding: 10px; border-radius: 5px;'>
-                                            <div style='font-size: 0.8rem; color: #888;'>52W High ({analysis['yearly_high_date']})</div>
-                                            <div style='font-size: 1.1rem; font-weight: bold;'>₹{analysis['yearly_high']:,.2f}</div>
-                                            <div style='font-size: 0.9rem; color: #888;'>{analysis['distance_from_high']:+.2f}% from high</div>
-                                        </div>
-                                    """, unsafe_allow_html=True)
-                                
-                                with week_cols[1]:
-                                    st.markdown(f"""
-                                        <div style='background: rgba(200,0,0,0.1); padding: 10px; border-radius: 5px;'>
-                                            <div style='font-size: 0.8rem; color: #888;'>52W Low ({analysis['yearly_low_date']})</div>
-                                            <div style='font-size: 1.1rem; font-weight: bold;'>₹{analysis['yearly_low']:,.2f}</div>
-                                            <div style='font-size: 0.9rem; color: #888;'>{analysis['distance_from_low']:+.2f}% from low</div>
-                                        </div>
-                                    """, unsafe_allow_html=True)
-                                
-                                st.markdown("---")
-                            stock_idx += 1                # Display NIFTY 50 and BANK NIFTY prominently
+                        
+            # Display NIFTY 50 and BANK NIFTY prominently
                 for idx, symbol in enumerate(['^NSEI', '^NSEBANK']):
                     if symbol in all_data:
                         analysis = all_analysis[symbol]
@@ -692,7 +626,7 @@ async def app():
                                 st.session_state.predictions, 
                                 INDEX_SYMBOLS[symbol]
                             )
-                            st.plotly_chart(fig, use_container_width=True, key=f"chart_{symbol}")
+                            st.plotly_chart(fig, use_container_width=True, key=f"index_chart_{symbol}")
                 
                 # Then display stock charts
                 st.subheader("Stock Charts")
@@ -702,7 +636,7 @@ async def app():
                     if symbol not in ['^NSEI', '^NSEBANK']:
                         with stock_cols[stock_idx % 2]:
                             fig = create_candlestick_chart(df, st.session_state.predictions, symbol)
-                            st.plotly_chart(fig, use_container_width=True, key=f"chart_{symbol}")
+                            st.plotly_chart(fig, use_container_width=True, key=f"stock_detail_chart_{symbol}")
                         stock_idx += 1
 
             # Detailed Analysis
