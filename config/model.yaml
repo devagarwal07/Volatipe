@@ -1,0 +1,60 @@
+garch:
+  models:
+    - type: garch
+      p: 1
+      q: 1
+    - type: egarch
+      p: 1
+      o: 1
+      q: 1
+    - type: gjr_garch
+      p: 1
+      o: 1
+      q: 1
+    - type: tgarch
+      p: 1
+      q: 1
+  selection: aic
+  ensemble_weighting: information_criteria
+  forecast_horizons: [1,5,10,20]
+
+har_rv:
+  lags: [1,5,22]
+
+lstm:
+  input_size: 64
+  hidden_size: 128
+  num_layers: 2
+  dropout: 0.2
+  bidirectional: true
+  attention: true
+  batch_size: 64
+  epochs: 30
+  learning_rate: 0.001
+  patience: 5
+  grad_clip: 1.0
+  horizon: 1
+
+transformer:
+  d_model: 128
+  nhead: 4
+  num_layers: 3
+  dim_feedforward: 256
+  dropout: 0.1
+  batch_size: 64
+  epochs: 25
+  learning_rate: 0.0007
+  patience: 5
+  horizon: 1
+
+ensemble:
+  regimes: [calm, normal, stressed, crisis]
+  base_weights:
+    calm: {garch: 0.2, har_rv: 0.25, lstm: 0.3, transformer: 0.25}
+    normal: {garch: 0.25, har_rv: 0.25, lstm: 0.25, transformer: 0.25}
+    stressed: {garch: 0.3, har_rv: 0.2, lstm: 0.25, transformer: 0.25}
+    crisis: {garch: 0.35, har_rv: 0.15, lstm: 0.25, transformer: 0.25}
+  adaptive:
+    performance_window: 60
+    min_weight: 0.05
+    max_weight: 0.6

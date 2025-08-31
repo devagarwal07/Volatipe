@@ -1,0 +1,41 @@
+{
+  "symbol": "RELIANCE",
+  "timestamp": "2025-08-31T19:34:56.781418",
+  "horizon": 5,
+  "forecasts": {
+    "garch": {
+      "value": 6.471481700049612,
+      "components": {
+        "garch": 7.122107773072553,
+        "egarch": 5.810810214226191,
+        "ensemble": 6.471481700049612,
+        "horizon_extended": true,
+        "requested_horizon": 5
+      },
+      "weights": {
+        "garch": 0.5038303330669344,
+        "egarch": 0.49616966693306563
+      }
+    },
+    "har": {
+      "value": 6.471481700049612,
+      "components": {
+        "ensemble": 6.471481700049612,
+        "model_type": "HAR-RV",
+        "note": "Placeholder - HAR-RV requires historical data unavailable in API context (using GARCH forecast as proxy)"
+      }
+    },
+    "combined": {
+      "value": 6.471481700049612,
+      "method": "equal_weight",
+      "count": 2
+    }
+  },
+  "forecast_dates": [
+    "2025-09-02",
+    "2025-09-03",
+    "2025-09-04",
+    "2025-09-05",
+    "2025-09-06"
+  ]
+}

@@ -1,0 +1,44 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Environments
+venv/
+.env
+.env.*
+
+# Data & artifacts
+data/raw/*
+!data/raw/.gitkeep
+data/processed/*
+!data/processed/.gitkeep
+data/features/*
+!data/features/.gitkeep
+data/predictions/*
+!data/predictions/.gitkeep
+models/
+logs/
+results/
+mlruns/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# OS / IDE
+.DS_Store
+*.swp
+.idea/
+.vscode/
+
+# Cache
+*.log
+*.pickle
+*.pkl
+*.parquet
+
+# Coverage / test
+htmlcov/
+.coverage
+.pytest_cache/
