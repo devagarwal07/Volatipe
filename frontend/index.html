@@ -1,114 +1,195 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-  <meta charset="UTF-8" />
-  <title>Volatility Live Dashboard</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <style>
-    body { font-family: system-ui, Arial, sans-serif; margin: 0; background:#0f1115; color:#e8e8e8; }
-    header { padding: 1rem 1.5rem; background:#181b21; display:flex; align-items:center; justify-content:space-between; }
-    h1 { margin:0; font-size:1.2rem; }
-    .container { padding: 1rem 1.5rem; }
-    .grid { display:grid; gap:1rem; grid-template-columns: repeat(auto-fit,minmax(320px,1fr)); }
-    .card { background:#1f242c; border:1px solid #2a3039; border-radius:8px; padding:0.75rem 0.9rem; display:flex; flex-direction:column; }
-    .card h2 { margin:0 0 .5rem; font-size:1rem; font-weight:600; }
-    .price { font-size:1.4rem; font-weight:600; }
-    .forecast { margin-top:.5rem; font-size:.9rem; line-height:1.3; }
-    canvas { width:100% !important; height:180px !important; }
-    footer { text-align:center; padding:1rem; font-size:.75rem; opacity:.6; }
-    .small { font-size:.7rem; opacity:.6; }
-    .row { display:flex; gap:1rem; flex-wrap:wrap; }
-    .badge { background:#2d3642; padding:2px 6px; border-radius:4px; font-size:.65rem; letter-spacing:.5px; }
-    .green { color:#4ade80; }
-    .red { color:#f87171; }
-  </style>
+    <meta charset="UTF-8" />
+    <title>Volatility Live Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+        body {
+            font-family: system-ui, Arial, sans-serif;
+            margin: 0;
+            background: #0f1115;
+            color: #e8e8e8;
+        }
+
+        header {
+            padding: 1rem 1.5rem;
+            background: #181b21;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 1.2rem;
+        }
+
+        .container {
+            padding: 1rem 1.5rem;
+        }
+
+        .grid {
+            display: grid;
+            gap: 1rem;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        }
+
+        .card {
+            background: #1f242c;
+            border: 1px solid #2a3039;
+            border-radius: 8px;
+            padding: 0.75rem 0.9rem;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card h2 {
+            margin: 0 0 .5rem;
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .price {
+            font-size: 1.4rem;
+            font-weight: 600;
+        }
+
+        .forecast {
+            margin-top: .5rem;
+            font-size: .9rem;
+            line-height: 1.3;
+        }
+
+        canvas {
+            width: 100% !important;
+            height: 180px !important;
+        }
+
+        footer {
+            text-align: center;
+            padding: 1rem;
+            font-size: .75rem;
+            opacity: .6;
+        }
+
+        .small {
+            font-size: .7rem;
+            opacity: .6;
+        }
+
+        .row {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .badge {
+            background: #2d3642;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: .65rem;
+            letter-spacing: .5px;
+        }
+
+        .green {
+            color: #4ade80;
+        }
+
+        .red {
+            color: #f87171;
+        }
+    </style>
 </head>
+
 <body>
-  <header>
-    <h1>Volatility Live Dashboard</h1>
-    <div class="small">Auto-refreshing every 2 min</div>
-  </header>
-  <div class="container">
-    <div class="grid" id="cards"></div>
-  </div>
-  <footer>MSAE-India Volatility &middot; Experimental Live View</footer>
+    <header>
+        <h1>Volatility Live Dashboard</h1>
+        <div class="small">Auto-refreshing every 2 min</div>
+    </header>
+    <div class="container">
+        <div class="grid" id="cards"></div>
+    </div>
+    <footer>MSAE-India Volatility &middot; Experimental Live View</footer>
 
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script>
-    const API_BASE = location.origin.replace(/\/$/, '');
-    const SYMBOLS = ['RELIANCE','HDFCBANK','INFY'];
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        const API_BASE = location.origin.replace(/\/$/, '');
+        const SYMBOLS = ['RELIANCE', 'HDFCBANK', 'INFY'];
 
-    function createCard(symbol){
-      const div = document.createElement('div');
-      div.className='card';
-      div.innerHTML = `\n        <h2>${symbol} <span class="badge" id="status-${symbol}">--</span></h2>\n        <div class="price" id="price-${symbol}">--</div>\n        <div class="forecast" id="forecast-${symbol}">Loading...</div>\n        <canvas id="chart-${symbol}"></canvas>\n        <div class="small" id="meta-${symbol}"></div>`;
-      return div;
-    }
-
-    const charts = {};
-
-    function initCharts(){
-      SYMBOLS.forEach(sym => {
-        const ctx = document.getElementById(`chart-${sym}`).getContext('2d');
-        charts[sym] = new Chart(ctx, {
-          type:'line',
-            data:{ labels:[], datasets:[{ label:sym+' Close', data:[], borderColor:'#60a5fa', tension:.15, fill:false, pointRadius:0, borderWidth:1.5 }]},
-            options:{ scales:{ x:{ ticks:{ color:'#94a3b8', maxTicksLimit:5 }, grid:{ color:'#1f2937' } }, y:{ ticks:{ color:'#94a3b8' }, grid:{ color:'#1f2937' } } }, plugins:{ legend:{ display:false } }, animation:false, maintainAspectRatio:false }
-        });
-      });
-    }
-
-    async function fetchJSON(url){
-      const r = await fetch(url);
-      if(!r.ok) throw new Error(await r.text());
-      return r.json();
-    }
-
-    function fmt(n){ return n==null? '--' : Number(n).toFixed(4); }
-
-    async function updateSymbol(sym){
-      try {
-        const snap = await fetchJSON(`${API_BASE}/live/forecast/${sym}`);
-        document.getElementById(`status-${sym}`).textContent = snap.last_price_time? 'LIVE':'--';
-        document.getElementById(`price-${sym}`).textContent = fmt(snap.last_price);
-        if(snap.forecast){
-          const f = snap.forecast;
-          document.getElementById(`forecast-${sym}`).innerHTML = `\n            <div>GARCH: <span class="green">${fmt(f.garch)}</span></div>\n            <div>HAR-RV: <span class="green">${fmt(f.har_rv)}</span></div>\n            <div>Blend: <span class="green">${fmt(f.blend_simple)}</span></div>`;
+        function createCard(symbol) {
+            const div = document.createElement('div');
+            div.className = 'card';
+            div.innerHTML = `\n        <h2>${symbol} <span class="badge" id="status-${symbol}">--</span></h2>\n        <div class="price" id="price-${symbol}">--</div>\n        <div class="forecast" id="forecast-${symbol}">Loading...</div>\n        <canvas id="chart-${symbol}"></canvas>\n        <div class="small" id="meta-${symbol}"></div>`;
+            return div;
         }
-        document.getElementById(`meta-${sym}`).textContent = snap.forecast? `Updated ${new Date(snap.forecast.generated_at_utc).toLocaleTimeString()}` : '';
 
-        // Append price to chart
-        if(charts[sym] && snap.last_price){
-          const chart = charts[sym];
-            const ts = snap.last_price_time || new Date().toISOString();
-            chart.data.labels.push(ts.slice(11,19));
-            chart.data.datasets[0].data.push(snap.last_price);
-            if(chart.data.labels.length>120){
-              chart.data.labels.shift();
-              chart.data.datasets[0].data.shift();
+        const charts = {};
+
+        function initCharts() {
+            SYMBOLS.forEach(sym => {
+                const ctx = document.getElementById(`chart-${sym}`).getContext('2d');
+                charts[sym] = new Chart(ctx, {
+                    type: 'line',
+                    data: { labels: [], datasets: [{ label: sym + ' Close', data: [], borderColor: '#60a5fa', tension: .15, fill: false, pointRadius: 0, borderWidth: 1.5 }] },
+                    options: { scales: { x: { ticks: { color: '#94a3b8', maxTicksLimit: 5 }, grid: { color: '#1f2937' } }, y: { ticks: { color: '#94a3b8' }, grid: { color: '#1f2937' } } }, plugins: { legend: { display: false } }, animation: false, maintainAspectRatio: false }
+                });
+            });
+        }
+
+        async function fetchJSON(url) {
+            const r = await fetch(url);
+            if (!r.ok) throw new Error(await r.text());
+            return r.json();
+        }
+
+        function fmt(n) { return n == null ? '--' : Number(n).toFixed(4); }
+
+        async function updateSymbol(sym) {
+            try {
+                const snap = await fetchJSON(`${API_BASE}/live/forecast/${sym}`);
+                document.getElementById(`status-${sym}`).textContent = snap.last_price_time ? 'LIVE' : '--';
+                document.getElementById(`price-${sym}`).textContent = fmt(snap.last_price);
+                if (snap.forecast) {
+                    const f = snap.forecast;
+                    document.getElementById(`forecast-${sym}`).innerHTML = `\n            <div>GARCH: <span class="green">${fmt(f.garch)}</span></div>\n            <div>HAR-RV: <span class="green">${fmt(f.har_rv)}</span></div>\n            <div>Blend: <span class="green">${fmt(f.blend_simple)}</span></div>`;
+                }
+                document.getElementById(`meta-${sym}`).textContent = snap.forecast ? `Updated ${new Date(snap.forecast.generated_at_utc).toLocaleTimeString()}` : '';
+
+                // Append price to chart
+                if (charts[sym] && snap.last_price) {
+                    const chart = charts[sym];
+                    const ts = snap.last_price_time || new Date().toISOString();
+                    chart.data.labels.push(ts.slice(11, 19));
+                    chart.data.datasets[0].data.push(snap.last_price);
+                    if (chart.data.labels.length > 120) {
+                        chart.data.labels.shift();
+                        chart.data.datasets[0].data.shift();
+                    }
+                    chart.update();
+                }
+            } catch (e) {
+                console.error('Update failed', sym, e);
             }
-            chart.update();
         }
-      } catch(e){
-        console.error('Update failed', sym, e);
-      }
-    }
 
-    async function refreshAll(){
-      for(const sym of SYMBOLS){
-        updateSymbol(sym);
-      }
-    }
+        async function refreshAll() {
+            for (const sym of SYMBOLS) {
+                updateSymbol(sym);
+            }
+        }
 
-    function start(){
-      const container = document.getElementById('cards');
-      SYMBOLS.forEach(s => container.appendChild(createCard(s)));
-      initCharts();
-      refreshAll();
-      setInterval(refreshAll, 120000); // 2 min
-    }
+        function start() {
+            const container = document.getElementById('cards');
+            SYMBOLS.forEach(s => container.appendChild(createCard(s)));
+            initCharts();
+            refreshAll();
+            setInterval(refreshAll, 120000); // 2 min
+        }
 
-    document.addEventListener('DOMContentLoaded', start);
-  </script>
+        document.addEventListener('DOMContentLoaded', start);
+    </script>
 </body>
+
 </html>
